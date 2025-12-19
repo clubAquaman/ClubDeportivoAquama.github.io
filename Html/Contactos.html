@@ -974,6 +974,7 @@
 </div>
     </div>
     <script>
+
 // Número de WhatsApp FIJO (receptor)
 const WHATSAPP_RECEPTOR = "573102664190"; // ⬅️ TU NÚMERO FIJO - NO CAMBIAR
 
@@ -1002,8 +1003,8 @@ function formatPhoneNumberEmisor(phone) {
 }
 
 // Función para construir el mensaje de WhatsApp
-function buildWhatsAppMessage(form.) {
-    const { firstName, lastName, phone, subject, message } = form.;
+function buildWhatsAppMessage(formData) {
+    const { firstName, lastName, phone, subject, message } = formData;
     
     const subjectTexts = {
         'clases': 'Información sobre clases de natación',
@@ -1020,19 +1021,20 @@ function buildWhatsAppMessage(form.) {
     const phoneFormatted = phone.startsWith('+') ? phone : `+${phone}`;
     
     return encodeURIComponent(
-        `*NUEVO MENSAJE DESDE EL SITIO WEB*\n\n` +
+        `*NUEVO MENSAJE DESDE EL SITIO WEB - AQUAMAN NATACIÓN*\n\n` +
         `*Nombre:* ${firstName} ${lastName}\n` +
         `*Teléfono:* ${phoneFormatted}\n` +
         `*Asunto:* ${subjectDisplay}\n\n` +
         `*Mensaje:*\n${message}\n\n` +
-        `---`
+        `---\n` +
+        `Este mensaje fue enviado desde el formulario de contacto del sitio web.`
     );
 }
 
 // Función para crear enlace de WhatsApp
-function createWhatsAppLink(emisorPhone, message.) {
+function createWhatsAppLink(emisorPhone, messageData) {
     const formattedEmisor = formatPhoneNumberEmisor(emisorPhone);
-    const encodedMessage = buildWhatsAppMessage(message.);
+    const encodedMessage = buildWhatsAppMessage(messageData);
     
     // EL ENLACE SIEMPRE VA A TU NÚMERO FIJO (RECEPTOR)
     return `https://wa.me/${WHATSAPP_RECEPTOR}?text=${encodedMessage}`;
@@ -1043,7 +1045,7 @@ document.getElementById('contactForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     // Obtener datos del formulario
-    const form. = {
+    const formData = {
         firstName: document.getElementById('firstName').value.trim(),
         lastName: document.getElementById('lastName').value.trim(),
         phone: document.getElementById('phone').value.trim(),
@@ -1052,35 +1054,35 @@ document.getElementById('contactForm').addEventListener('submit', function(e) {
     };
     
     // Validaciones
-    if (!form..firstName || !form..lastName) {
+    if (!formData.firstName || !formData.lastName) {
         alert('Por favor ingresa tu nombre y apellido');
         return;
     }
     
-    if (!form..phone) {
+    if (!formData.phone) {
         alert('Por favor ingresa tu número de WhatsApp');
         return;
     }
     
     // Validar que tenga al menos 10 dígitos
-    const phoneDigits = form..phone.replace(/\D/g, '');
+    const phoneDigits = formData.phone.replace(/\D/g, '');
     if (phoneDigits.length < 10) {
         alert('Por favor ingresa un número de teléfono válido (mínimo 10 dígitos)');
         return;
     }
     
-    if (!form..subject) {
+    if (!formData.subject) {
         alert('Por favor selecciona un asunto');
         return;
     }
     
-    if (!form..message) {
+    if (!formData.message) {
         alert('Por favor escribe tu mensaje');
         return;
     }
     
     // Crear enlace de WhatsApp (SIEMPRE a tu número)
-    const whatsappLink = createWhatsAppLink(form..phone, form.);
+    const whatsappLink = createWhatsAppLink(formData.phone, formData);
     
     // Mostrar mensaje de éxito
     document.getElementById('contactForm').style.display = 'none';
@@ -1102,22 +1104,36 @@ function resetForm() {
     document.getElementById('contactForm').reset();
     document.getElementById('contactForm').style.display = 'block';
     document.getElementById('successMessage').style.display = 'none';
+    
+    // Restaurar botón de enviar
+    const submitBtn = document.querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '<i class="fab fa-whatsapp"></i> ENVIAR POR WHATSAPP';
+    submitBtn.disabled = false;
 }
+
+// Configurar botón para resetear el formulario en el mensaje de éxito
+document.addEventListener('DOMContentLoaded', function() {
+    // Si el usuario quiere enviar otro mensaje desde la pantalla de éxito
+    const successMessageDiv = document.getElementById('successMessage');
+    if (successMessageDiv) {
+        // Podrías agregar un botón "Enviar otro mensaje" aquí si quieres
+    }
+});
 
 // Máscara para el input de teléfono (mejorada)
 document.getElementById('phone').addEventListener('input', function(e) {
     let value = e.target.value.replace(/\D/g, '');
     
     if (value.length > 0) {
-        // Agregar +57 automáticamente si no lo tiene
+        // Si el usuario empieza a escribir, agregar +57 automáticamente
         if (!value.startsWith('57') && value.length <= 10) {
             value = '57' + value;
         }
         
         // Formatear visualmente
-        let formatted = '';
+        let formatted = '+';
         if (value.startsWith('57')) {
-            formatted = '+' + value.substring(0, 2);
+            formatted += value.substring(0, 2);
             if (value.length > 2) formatted += ' ' + value.substring(2, 5);
             if (value.length > 5) formatted += ' ' + value.substring(5, 8);
             if (value.length > 8) formatted += ' ' + value.substring(8, 12);
@@ -1134,80 +1150,56 @@ document.getElementById('phone').addEventListener('input', function(e) {
 document.getElementById('phone').addEventListener('blur', function(e) {
     const value = e.target.value.trim();
     if (value && !value.startsWith('+')) {
-        e.target.value = '+' + value.replace(/\D/g, '');
+        const cleaned = value.replace(/\D/g, '');
+        if (!cleaned.startsWith('57') && cleaned.length === 10) {
+            e.target.value = '+57 ' + cleaned;
+        } else {
+            e.target.value = '+' + cleaned;
+        }
     }
 });
-        // Form submission
-        document.getElementById('contactForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Simulate form processing
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ENVIANDO...';
-            submitBtn.disabled = true;
-            
-            // Simulate API call
-            setTimeout(() => {
-                // Show success message
-                document.getElementById('contactForm').style.display = 'none';
-                document.getElementById('successMessage').style.display = 'block';
-            }, 2000);
-        });
-        
-        // Reset form function
-        function resetForm() {
-            document.getElementById('contactForm').style.display = 'block';
-            document.getElementById('successMessage').style.display = 'none';
-            document.getElementById('contactForm').reset();
-            
-            const submitBtn = document.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> ENVIAR MENSAJE';
-            submitBtn.disabled = false;
+
+// FAQ functionality
+const faqQuestions = document.querySelectorAll('.faq-question');
+faqQuestions.forEach(question => {
+    question.addEventListener('click', () => {
+        const faqItem = question.parentElement;
+        faqItem.classList.toggle('active');
+    });
+});
+
+// Add floating animation to form elements on focus
+const formInputs = document.querySelectorAll('.form-input, .form-textarea, .form-select');
+formInputs.forEach(input => {
+    input.addEventListener('focus', function() {
+        this.parentElement.style.transform = 'translateY(-5px)';
+    });
+    
+    input.addEventListener('blur', function() {
+        this.parentElement.style.transform = 'translateY(0)';
+    });
+});
+
+// Animate elements on scroll
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.animationPlayState = 'running';
         }
-        
-        // FAQ functionality
-        const faqQuestions = document.querySelectorAll('.faq-question');
-        faqQuestions.forEach(question => {
-            question.addEventListener('click', () => {
-                const faqItem = question.parentElement;
-                faqItem.classList.toggle('active');
-            });
-        });
-        
-        // Add floating animation to form elements on focus
-        const formInputs = document.querySelectorAll('.form-input, .form-textarea, .form-select');
-        formInputs.forEach(input => {
-            input.addEventListener('focus', function() {
-                this.parentElement.style.transform = 'translateY(-5px)';
-            });
-            
-            input.addEventListener('blur', function() {
-                this.parentElement.style.transform = 'translateY(0)';
-            });
-        });
-        
-        // Animate elements on scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-        
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.animationPlayState = 'running';
-                }
-            });
-        }, observerOptions);
-        
-        // Observe all info cards and form groups
-        document.querySelectorAll('.info-card, .form-group').forEach(el => {
-            el.style.animationPlayState = 'paused';
-            observer.observe(el);
-        });
-    </script>
+    });
+}, observerOptions);
+
+// Observe all info cards and form groups
+document.querySelectorAll('.info-card, .form-group').forEach(el => {
+    el.style.animationPlayState = 'paused';
+    observer.observe(el);
+});
+</script>
 </section>
  <footer class="footer">
     <div class="c-container">
@@ -1220,14 +1212,14 @@ document.getElementById('phone').addEventListener('blur', function(e) {
                     <a href="../index.html" class="c-footer_link w--current">Inicio</a>
                     <a href="Conocenos.html" class="c-footer_link">Conocenos</a>
                     <a href="Novedades.html" class="c-footer_link">Novedades</a>
-                    <a href="TorneoInternacional.html" class="c-footer_link">Torneo Internacional/a>
+                    <a href="TorneoInternacional.html" class="c-footer_link">Torneo Internacional</a>
                         <div class="c-nav_link-arrow">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 7 8" fill="none" class="c-custom-svg">
                             </svg>
                         </div>
                     </a>
                     <a href="Modalidades.html" target="_blank" class="c-footer_link w-inline-block">
-                        <div>Modalidades/div>
+                        <div>Modalidades</div>
                         <div class="c-nav_link-arrow">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 7 8" fill="none" class="c-custom-svg">
                             </svg>
@@ -1347,4 +1339,3 @@ document.getElementById('phone').addEventListener('blur', function(e) {
             <link href="https://cdn.intellimize.co/snippet/117630511.js" rel="preload" as="script" />
 </body>
 </html>
-
